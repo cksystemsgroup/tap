@@ -1,0 +1,139 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" id="tap.cs.uni-salzburg.at" lang="en">
+
+<head>
+	<title>The TAP Project: Homepage</title>
+    <meta content="en-us" http-equiv="content-language">
+    <meta content="text/html; charset=utf-8" http-equiv="content-type">
+    <meta content="Harald R&ouml;ck" name="author">
+    <meta content="Silviu Craciunas; Bernhard Kast" name="design">
+    <meta content="TAP Project Homepage" name="description">
+	<link rel="stylesheet" type="text/css" media="screen,projection" href="screen.css">
+	<!--[if lt ie 7]>
+		<link rel="stylesheet" type="text/css" media="screen,projection" href="ie-win.css">
+	<![endif]-->
+</head>
+
+<body id="bhome">
+
+<div id="topnav">
+	<ul>
+		<li><a href="http://www.cs.uni-salzburg.at/~ck" title="Computational Systems Group">Computational Systems Group</a></li>
+	</ul>
+</div>
+
+<div id="header">
+	<h1>The TAP Project: Traffic Shaping System Calls</h1>
+</div>
+
+<div id="navigation">
+	<ul>
+		<li id="lhome"><a href="index.html" title="Home">Home</a></li>
+		<li id="lteam"><a href="team.html" title="Team">Team</a></li>
+		<li id="ldownloads"><a href="downloads.html" title="Downloads">Downloads</a></li>
+		<li id="llinks"><a href="links.html" title="Links">Links</a></li>
+	</ul>		
+</div>
+
+<div id="wrapper">
+<div id="content-wrapper">
+<div id="content">
+
+<div id="abstract"><br>
+A principle challenge in operating system design is enabling optimal
+process behavior while maximizing system utilization.  System calls
+are usually the default mechanism for user processes to get access to
+operating system services, and therefore determine process behavior
+but also affect system utilization directly.  However, many system
+calls are typically executed immediately upon invocation without any
+deliberation either until completion, or else partially until
+detecting some form of resource contention possibly deep in the
+kernel.  We propose a simple kernel-space mechanism for explicit,
+per-process system call scheduling already at kernel entry in order to
+control the time and rate at which system calls are executed.  We have
+developed a high-performance, SMP-ready Linux 2.6 kernel patch that
+implements the mechanism for system call scheduling and, as a
+prototype, policies that resemble traffic shaping in network routers
+for network- and disk-related I/O calls.  Our experiments show that
+already simple policies may provide strong I/O-related process
+isolation with low overhead, and may reduce thrashing in certain
+overload scenarios.  While
+system call scheduling may still not be able to outperform resource
+management systems that use specifically tuned kernel subsystems, our
+experiments indicate that it may sufficiently support relevant soft
+real-time applications yet using a vastly simpler and more generic
+approach.
+</div>
+
+<br>
+
+<h4>Funding:</h4>
+
+This project is funded by the <a href="http://www.fwf.ac.at/">Austrian
+Science Fund</a> project nummer P18913<br>
+
+<h4>Publications:</h4>
+S.S. Craciunas, C.M. Kirsch, and H. R&ouml;ck. I/O Resource management through system call
+scheduling.
+<em>ACM Operating Systems Review (OSR), Special Issue on Research and Developments in the Linux
+Kernel </em>, July 2008.
+<br>
+
+C. M. Kirsch. <a href="http://www.cs.uni-salzburg.at/~ck/content/publications/conferences/MontereyWorkshop04-ThreadingByAppointment.pdf">Threading
+by Appointment</a>.
+In <span style="font-style: italic;">Proc. Monterey
+Workshop</span>. CRC Press, 2004.&nbsp;
+<br>
+
+<h4>Talks:</h4>
+
+C. M. Kirsch and Harald R&ouml;ck. <a href="http://www.cs.uni-salzburg.at/~ck/content/publications/talks/Monterey06-ProcessShaping.pdf">Shaping
+Process Sematics</a>. In Monterey Workshop 2006.<br>
+
+<h4>Reports:</h4>
+S.S. Craciunas, C.M. Kirsch, and H. R&ouml;ck. <a href="http://www.cs.uni-salzburg.at/~ck/content/publications/reports/SBG07-ShapingProcessSemantics.pdf">Shaping process semantics</a>. Technical Report 2007-01, Department of Computer Sciences, University of Salzburg, April 2007. <br>
+
+Traffic shaping system calls with TAP:
+<a href="http://www.cs.uni-salzburg.at/~ck/content/publications/reports/SBG05-TrafficShapingSystemCallsTAP.pdf">SBG05</a>
+<br>
+
+The first technical report about TAP: <a href="http://www.cs.uni-salzburg.at/~ck/content/publications/reports/SBG04-ThreadingByAppointment.pdf">SBG04</a>
+<br>
+
+<br>
+
+</div>
+</div>
+
+<div id="picture-wrapper">
+<div id="picture-bar"><br>
+
+<br>
+
+<a href="idea_big.png"><img title="Idea" style="border: 2px solid ;" src="idea_small.png" alt="Idea"></a><br>
+
+<br>
+
+<a href="result_big.png"><img style="border: 2px solid ;" title="Results" src="result_small.png" alt="Result"></a></div>
+
+</div>
+</div>
+
+<div id="footer">
+<div id="about">
+Design by <a href="http://www.cs.uni-salzburg.at/~scraciunas">Silviu Craciunas</a>
+and <a href="http://www.cs.uni-salzburg.at/~bkast">Bernhard Kast</a>.<br>
+Content by <a href="http://www.cs.uni-salzburg.at/~hroeck">Harald R&ouml;ck</a>
+<br><br>
+<a href="http://validator.w3.org/check?uri=referer"><img
+src="http://www.w3.org/Icons/valid-xhtml10"
+alt="Valid XHTML 1.0 Strict" height="31" width="88">
+</a>
+</div>
+
+<div id="logo"> </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,214 @@
+TAP  http://tap.cs.uni-salzburg.at/ 
+by Harald Roeck <hroeck@cs.uni-salzburg.at>, 
+Silviu Craciunas <scraciunas@cs.uni-salzburg.at>
+
+28 February 2007 
+
+ University Salzburg www.uni-salzburg.at
+ Department of Computer Science, cs.uni-salzburg.at
+
+ This project is funded by the Austrian Science Fund 
+ project number P18913
+
+ This program is free software; you can redistribute 
+ it and/or modify it under the terms of the GNU General 
+ Public License as published by the Free Software 
+ Foundation; either version 2 of the License, or (at 
+ your option) any later version.
+
+ This program is distributed in the hope that it 
+ will be useful, but WITHOUT ANY WARRANTY; without 
+ even the implied warranty of MERCHANTABILITY or 
+ FITNESS FOR A PARTICULAR PURPOSE.  
+
+ See the GNU General Public License for more details.
+
+
+System call scheduling
+~~~~~~~~~~~~~~~~~~~~~~
+
+A system call scheduler intercepts system calls at kernel 
+entry in order to determine explicitly when the system call 
+is actually executed based on some scheduling algorithm. If 
+necessary, the system call’s execution is delayed by putting 
+the invoking process to sleep. In principle, system call 
+scheduling may be applied to any system call.  As an example 
+application, we have implemented system call scheduling for
+network and disk calls as an SMP-ready patch of a 
+Linux 2.6.20 kernel.
+As a scheduling algorithm for network and disk calls, we use 
+a technique that we call process shaping, which resembles 
+traffic shaping in network routers but applied to system 
+calls.  
+
+Process shaping manipulates the frequency and latency
+at which system calls invoked by user processes are actually
+executed by the kernel. The current implementation provides
+improved user process isolation and real-time performance on
+network and disk I/O by controlling the network and disk call
+load on the kernel explicitly (as opposed to handling the 
+traffic in lower-level I/O subsystems).
+
+We have implemented a Linux kernel patch that adds the 
+functionality of process shaping to the 2.6.20 Linux kernel. 
+The shaping mechanism used is the known token bucket 
+algorithm. Given the presence or absence of tokens (which 
+usually represents a unit of bytes, in our case one token is 
+one page) that are in the bucket, the algorithm allows 
+bursts of data to be transferred. When a I/O system call 
+occurs the bucket is checked for the amount of tokens 
+available for the resource that is being used. If there not 
+enough available, no tokens are subtracted and the given 
+process is put on the wait queue. We therefore implement the 
+token bucket mechanism for specific I/O system calls. 
+Furthermore we differentiate between application-oriented 
+process shaping where the I/O behavior of the process is 
+shaped and resource-oriented process shaping.
+
+The package includes the tap kernel patch that should be 
+applied against the Linux kernel version 2.6.20. For more 
+information on how to apply a kernel patch please see the 
+"patch" and "diff" man pages. After applying the patch and 
+recompiling the kernel you should have access to the new 
+extended proc file system that allows low level control of 
+the shaping parameters for each process from user space. 
+
+The new structure can be found in /proc/PID/shaping, 
+containing :
+
+* ttid -  token table id
+* mode - shaping mode which can be either 0 for normal
+shaping, SHAPE-SHARE-CHILD for sharing the bucket with
+the children that the process spawns , SHAPE-RESOURCE
+for shaping the resource and and not the process and
+SHAPE-READ-WRITE for read - write isolation.
+* table/RESOURCEID/bucket_consumed_tokens consumed
+tokens of the bucket
+* table/RESOURCEID/consumed_tokens consumed tokens
+of the process or if the read-write mode is activated
+the consumed tokens for the write buffer
+table/RESOURCEID/count tokens remaining in the
+bucket / tokens remaining for the write buffer
+* table/RESOURCEID/rate the token rate / rate for the
+write buffer
+* table/RESOURCEID/consumed_tokens_read consumed
+tokens of the read buffer / unused if
+read-write mode not enabled
+* table/RESOURCEID/count_read tokens remaining in
+the bucket for the read buffer / unused if read-write
+mode not enabled
+* table/RESOURCEID/rate_read the token rate for the
+read buffer / unused if read-write mode not enabled
+* table/RESOURCEID/limit the burst
+* table/RESOURCEID/bucket_consumed_tokens_cache
+consumed tokens of the bucket for DISK cache
+* table/RESOURCEID/consumed_tokens_cache consumed
+tokens of the process for DISK cache
+* table/RESOURCEID/last_update last update time
+stamp of the bucket
+
+IMPORTANT : The proc structure should not be used 
+directly; for controlling and monitoring we have 
+extended the htop application by Hisham H. Muhammad 
+(http://htop.sourceforge.net/).
+
+Htop is an interactive process viewer.
+It requires ncurses. It is tested with Linux 2.6, but is 
+also reported to work (and was originally developed) with 
+the 2.4 series.
+
+Note that, while, htop is Linux specific -- it is based on 
+the Linux /proc filesystem -- it is also reported to work 
+with FreeBSD systems featuring a Linux-compatible /proc.
+
+In the user_tools package you will find : 
+* htop-0.6.5 - the modified htop sources 
+* include - tap.h include file
+* src - containing some small user programs that allow 
+controlling of shaping mechanism :
+	- getppid.c : get the pid of current process
+	- inet_toa.c : transform a ip address into a 
+		readable format
+	- shape.c : activating shaping for a process 
+		with a specified mode
+	- syscall_overhead : display overhead of shaping 
+		mechanism for a specified system call
+	- test.c : a simple test program for shaping
+	- unshape.c : disable shaping for process
+
+Compilation instructions
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+This program is distributed as a standard autotools-based 
+package. See the INSTALL file of htop for detailed 
+instructions on how to compile htop, but you are probably 
+used to the common "configure/make/make install" routine. 
+For the other user programs use the standard   
+	gcc -o <program> program.c command.
+
+Functionality
+~~~~~~~~~~~~~
+
+See the manual page (man htop) or the on-line help ('F1' or 
+'h' inside htop) for a list of supported key commands.
+
+The extended functionality implemented in htop beside the 
+given process specific data and statistics displays 
+following fields in the main window:
+
+* TD The transfer rate of the disk for the shared bucket
+table
+* PD The transfer rate of the disk for the process
+* TCD The disk cache transfer rate for the shared bucket
+table
+* PCD The disk cache transfer rate for the process
+* TNx The transfer rate of the network device ethx for
+the shared bucket table 
+* PNx The transfer rate of the network device ethx for
+the process
+* SHP Shows if shaping is enabled for the given process
+* MODE Displays the shaping mode SHAPE-SHARE-CHILD,
+SHAPE-RESOURCE, SHAPE-READ-WRITE
+
+For each selected process or process group you can modify 
+the shaping mechanism by pressing the F4 key.
+
+The menu screen includes :
+
+SHAPING -> enable/disable shaping for selected process
+MODE    -> change shaping mode
+DEVICES -> DISK | 
+	-> LO   |
+	-> NET1 |
+	-> NET2 | -> Rate (KB/s)  - transfer rate
+		  -> Burst (KB)   - burst count
+		  -> Count        - token count in bucket
+STATS   -> statistics
+
+A super user can enable shaping for a process and set
+the shaping mode. Additionally a user can change the token
+rate, bucket size and token count for each process and
+resource. 
+
+Shaping example
+~~~~~~~~~~~~~~~
+
+For an exemplification of how to use the shaping mechanism 
+consider following scenario: 
+A web server and a media streaming application run on the 
+machine. In htop the two processes will appear in the list 
+of processes. If we want for example to shape both processes 
+so that the web server allows only a maximum of 40 KB/s 
+upstream and 200 KB/s downstream and the media streaming 
+application is allowed only 2 MB/s traffic on disk, we first 
+select the web server process in the list, go to the shaping 
+menu, enable shaping, activate the "shape read write" mode 
+and set the read and write rate for the used network device 
+to the amount we want (in this case 200 and 40). Then we 
+select the media streaming application, enable shaping and 
+set the mode to "shape resource". We then set the rate (note 
+that for this process we have only one rate as we do not 
+shape read and write independently, we want the overall 
+traffic of the process to be under the given value) to the 
+desired value. In this way both processes will behave as 
+indicated by the rates.        

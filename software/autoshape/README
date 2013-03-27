@@ -1,0 +1,227 @@
+Autoshaping  http://tap.cs.uni-salzburg.at/ 
+by Harald Roeck <hroeck@cs.uni-salzburg.at>, 
+Silviu Craciunas <scraciunas@cs.uni-salzburg.at>
+
+27 August 2007 
+
+ University Salzburg, www.uni-salzburg.at
+ Department of Computer Science, cs.uni-salzburg.at
+
+ This project is funded by the Austrian Science Fund 
+ project number P18913
+
+ This program is free software; you can redistribute 
+ it and/or modify it under the terms of the GNU General 
+ Public License as published by the Free Software 
+ Foundation; either version 2 of the License, or (at 
+ your option) any later version.
+
+ This program is distributed in the hope that it 
+ will be useful, but WITHOUT ANY WARRANTY; without 
+ even the implied warranty of MERCHANTABILITY or 
+ FITNESS FOR A PARTICULAR PURPOSE.  
+
+ See the GNU General Public License for more details.
+
+
+Auto shaping
+~~~~~~~~~~~~~~~~
+Auto-shaping is an experimental auto-shaping user tool 
+that can effectively control the QoS of video-streaming 
+applications like VLC. 
+The auto-shaping tool gathers data using SystemTap
+and kprobes instrumentation.
+The soft-real time application is referred to as the master 
+while the other shaped non-sft-real time processes are the 
+slaves
+
+Files included:
+	* autoshape.c - main c file
+	* Makefile 
+	* Process.c - handles display and process information
+	* Process.h - header file
+	* prof.stp - SystemTap script to get write system
+call frequencies for a process
+
+Usage : autoshape <pid> where the pid is that of the master 
+process
+
+The autoshaping application will determine the QoS of the 
+master process and control the token rate of the slave
+processes
+
+Compilation instructions
+~~~~~~~~~~~~~~~~~~~~~~~~
+In order to use autoshape you must first install 
+SystemTap(http://sourceware.org/systemtap/)
+
+As described on the SystemTap website here is how you 
+install SystemTap on a debian system:
+
+<begin quote>
+
+1. Get a working compiler
+
+Some versions of GCC are known to miscompile debug 
+information. Without proper debug information, Kprobes and 
+SystemTap will be unable to work properly. Besides that, 
+SystemTap requires the same compiler version used to build 
+the kernel. So, save yourself some time and just go ahead 
+and grab a good GCC compiler and recompile your kernel.
+
+GCC 4.1.2 is a good compiler. On the other hand, the default 
+GCC version supplied with Ubuntu 6.06 and Debian sarge, GCC 
+4.0.x, is an example of a bad compiler.
+
+For more information on this issue see debian bug #378628 
+and debian bug #378621.
+
+2.Get systemtap package
+
+First of all, we will need SystemTap's package. As of 
+2006-06-29 it is available in testing and in unstable. A 
+simple "apt-get install systemtap" should do the trick.
+
+apt-get build-dep systemtap
+apt-get --compile source systemtap
+dpkg -i systemtap*deb
+
+3.Configure the kernel source
+
+Decompress your kernel source.
+
+Just to avoid the hassle of configuring a clean kernel from 
+scratch, copy a sane .config into your kernel source 
+directory. A /boot/config-2.6.xxxxxxxx from a debian package 
+will do just fine.
+
+cd /usr/src
+tar jxvf linux-source-2.6.15.tar.bz2
+cd linux-source-2.6.15
+cp /boot/config-2.6-xxxxxxxx .
+
+4.Configure your kernel
+
+make menuconfig
+
+Inside make configure, select/enable, in order, the 
+following options:
+
+Kernel hacking  --->
+    [*] Debug Filesystem
+    [*] Kernel debugging
+        [*]   Compile the kernel with debug info
+Instrumentation Support  --->
+    [*] Kprobes (EXPERIMENTAL)
+
+Optionally, compile your kernel with CONFIG_RELAY support:
+
+General setup  --->
+    [*] Kernel->user space relay support (formerly relayfs)
+
+/!\ Notice: there is no "CONFIG_RELAY" in kernels older than 
+2.6.17.
+
+5.Building a custom kernel suitable for SystemTap
+
+Debian kernels do not contain debug information and there is 
+no automatic way of installing or producing separate -dbg 
+packages as RedHat has. Thus, there is no escape: you will 
+have to manually configure and build a new kernel image 
+package. It may help to lobby the Debian kernel-package 
+maintainers, for example via debian bug #365349.
+
+Now, get a kernel source package and kernel-package. 
+
+apt-get install linux-source-2.6.15 kernel-package fakeroot
+
+
+5.Configuring kernel-package
+
+Add the following to to /etc/kernel-pkg.conf:
+
+install_vmlinux = YES
+
+6.Building your kernel
+
+fakeroot make-kpkg --initrd --append-to-version=-systemtap-1.0 
+kernel_image kernel_headers
+
+Notice the following things about the above command line:
+
+--initrd
+
+    instruct kernel-package to build an initrd image 
+--append-to-version
+
+
+You can pass more options to make-kpkg. It should not be a 
+problem here.
+
+7.Install your custom kernel
+
+New packages for your kernel (image and headers) were created. 
+Install them:
+
+dpkg -i ../kernel-image-2.6.15-systemtap-1.0_10.00.Custom_i386.deb
+dpkg -i ../kernel-headers-2.6.15-systemtap-1.0_10.00.Custom_i386.deb
+
+Add this new image to your bootloader list. Read lilo or 
+grub documentation for more information on how to accomplish this.
+
+<end quote>
+
+For the autoshaping tool just use make 
+
+Autoshaping also uses ncurses, just install it from http://ftp.gnu.org/pub/gnu/ncurses
+
+
+Functionality
+~~~~~~~~~~~~~
+In the main window of the autoshaping tool you will see the 
+input value and output value of the fuzzy controller as well 
+as master process status. With 'a' the autoshaping is 
+enabled/disabled and keys 0-3 select the device:
+DISK = 0
+LO = 1
+NET1 = 2
+NET2 = 3
+
+
+ ┌──────────────────────────────────────────────────────────┐┌────────────────────────────────────────────────┐
+ │----------------------- AUTOSHAPE ------------------------││TASK LIST                                       │
+ │ TIME: 15:46:56 | DATE: 27- 8-2007                        ││  PID |Shp|Mode|RRate |RCount|WRate |WCount     │
+ │ Calls :    4 Average Time:   23 Total Time:    954       ││ 11215|  1|   1|  3000|   123|  5000|   401     │
+ │ Process ID: [ 10448 ] | Shaping : [ 0 ] | Mode : [ -1 ]  ││                                                │
+ │ Device : [ 0 ]                                           ││                                                │
+ │ Process status: [  ok  ]                                 ││                                                │
+ │ Fuzzy A Value :         Normal                           ││                                                │
+ │ Fuzzy B Value :   -30                                    ││                                                │
+ │ Autoshaping : [ disabled ]                               ││                                                │
+ │                                                          ││                                                │
+ │                                                          ││                                                │
+ │                                                          ││                                                │
+ │                                                          ││                                                │
+ │                                                          ││                                                │
+ │                                                          ││                                                │
+ │                                                          ││                                                │
+ │                                                          ││                                                │
+ │                                                          ││                                                │
+ │                                                          ││                                                │
+ │ [ press a to enable/disable autoshaping]                 ││                                                │
+ │ [ press q to end ]                                       ││                                                │
+ └──────────────────────────────────────────────────────────┘└────────────────────────────────────────────────┘
+                                                             
+
+AutoShaping example
+~~~~~~~~~~~~~~~~~~
+Take for example a disk-bound VLC client with pid 10448 that 
+runs on the same machine as other processes that generate 
+additional disk load(seen in the process list with pid ).  
+In order to automatically control the QoS of the VLC 
+application one must enable shaping for the additional 
+processes and run the autoshaping tool with the argument 
+10448 in root mode. In the autoshaping application press 'a' 
+to enable autoshaping. The rate seen in the left task list 
+window will modify to a value where the master process is 
+running perfectly.
